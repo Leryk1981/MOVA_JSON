@@ -1,6 +1,6 @@
 {
   "name": "leryk-cli-mova",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MOVA CLI: validate, schema:sync, snippet:generate commands",
   "type": "module",
   "engines": {
@@ -36,7 +36,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "leryk-sdk-mova": "0.1.1",
+    "leryk-sdk-mova": "0.1.2",
     "cac": "^6.7.14"
   },
   "devDependencies": {
