@@ -1,5 +1,5 @@
 {
-  "name": "@mova/client-vscode",
+  "name": "leryk-vscode-mova",
   "version": "0.1.0",
   "description": "MOVA VSCode extension client (thin LSP wrapper)",
   "type": "module",
@@ -72,15 +72,15 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@mova/sdk": "workspace:*",
-    "@mova/server-lsp": "workspace:*",
+    "leryk-sdk-mova": "0.1.0",
+    "leryk-lsp-mova": "0.1.0",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
     "@types/vscode": "^1.84.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"

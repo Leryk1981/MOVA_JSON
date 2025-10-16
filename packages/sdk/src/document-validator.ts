@@ -1,4 +1,3 @@
-import { parseTree } from 'jsonc-parser';
 import { initializeValidator, ajvValidate } from './validator.js';
 import { mapAjvErrorsWithContext } from './error-mapper.js';
 import type { ValidateResult } from './types.js';

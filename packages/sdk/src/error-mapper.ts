@@ -1,5 +1,5 @@
 import { parseTree, findNodeAtLocation, type Node as JsonNode } from 'jsonc-parser';
-import type Ajv from 'ajv';
+import type { ErrorObject } from 'ajv';
 import type { Diagnostic, Position, Range } from './types.js';
 
 /**
@@ -39,7 +39,7 @@ function instancePathToPathArray(instancePath: string): Array<string | number> {
  * Map AJV error objects to LSP diagnostics with text positions
  */
 export function mapAjvErrorsToDiagnostics(
-  errors: Array<Ajv.ErrorObject>,
+  errors: Array<ErrorObject>,
   text: string
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
@@ -82,7 +82,7 @@ export function mapAjvErrorsToDiagnostics(
  * Map errors with additional context and grouping
  */
 export function mapAjvErrorsWithContext(
-  errors: Array<Ajv.ErrorObject>,
+  errors: Array<ErrorObject>,
   text: string
 ): Diagnostic[] {
   const diagnostics = mapAjvErrorsToDiagnostics(errors, text);

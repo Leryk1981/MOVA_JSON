@@ -1,5 +1,5 @@
 {
-  "name": "@mova/schemas",
+  "name": "leryk-schemas-mova",
   "version": "3.4.1",
   "description": "MOVA Envelope schemas (JSON Schema, AJV 2020-12 compatible)",
   "type": "module",
@@ -33,8 +33,8 @@
     "format": "prettier --write src"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"

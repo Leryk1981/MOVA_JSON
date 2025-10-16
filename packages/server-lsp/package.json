@@ -1,5 +1,5 @@
 {
-  "name": "@mova/server-lsp",
+  "name": "leryk-lsp-mova",
   "version": "0.1.0",
   "description": "MOVA Language Server Protocol (LSP) implementation",
   "type": "module",
@@ -25,15 +25,15 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@mova/sdk": "workspace:*",
+    "leryk-sdk-mova": "0.1.0",
     "jsonc-parser": "^3.2.1",
     "vscode-languageserver": "^8.1.0",
-    "vscode-languageserver-textdocument": "^1.3.0"
+    "vscode-languageserver-textdocument": "^1.0.11"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"

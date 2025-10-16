@@ -9,7 +9,6 @@ import {
   CompletionItem,
   CompletionItemKind,
   Hover,
-  InitializeParams,
   InitializeResult,
   TextDocumentPositionParams,
   Range,
@@ -40,21 +39,19 @@ let globalSettings: ServerSettings = {
   maxDiagnostics: 200,
 };
 
-const documentSettings = new Map<string, Promise<ServerSettings>>();
-
 // Initialize
-connection.onInitialize((params: InitializeParams): InitializeResult => {
+connection.onInitialize((): InitializeResult => {
   connection.console.log('MOVA LSP: initializing');
 
   // Load schemas
   try {
     if (typeof movaSdk.initializeValidator === 'function') {
-      void movaSdk.initializeValidator().catch((e: any) =>
-        connection.console.warn('movaSdk.initializeValidator() warning:', String(e))
+      void movaSdk.initializeValidator().catch((e: unknown) =>
+        connection.console.warn(`movaSdk.initializeValidator() warning: ${String(e)}`)
       );
     }
-  } catch (e) {
-    connection.console.warn('Error calling movaSdk.initializeValidator', String(e));
+  } catch (e: unknown) {
+    connection.console.warn(`Error calling movaSdk.initializeValidator: ${String(e)}`);
   }
 
   const result: InitializeResult = {
@@ -136,9 +133,9 @@ async function validateAndSendDiagnostics(text: string, uri: string): Promise<vo
 
     const maxD = globalSettings.maxDiagnostics ?? 200;
     connection.sendDiagnostics({ uri, diagnostics: diagnostics.slice(0, maxD) });
-  } catch (err: any) {
+  } catch (err: unknown) {
     connection.window.showErrorMessage(`MOVA LSP validate error: ${String(err)}`);
-    connection.console.error('validateAndSendDiagnostics error', String(err));
+    connection.console.error(`validateAndSendDiagnostics error: ${String(err)}`);
   }
 }
 
@@ -153,7 +150,7 @@ documents.onDidClose((e) => {
 });
 
 // Completion handler
-connection.onCompletion(async (params: TextDocumentPositionParams): Promise<CompletionItem[]> => {
+connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] => {
   try {
     const doc = documents.get(params.textDocument.uri);
     const text = doc?.getText() ?? '';
@@ -165,10 +162,24 @@ connection.onCompletion(async (params: TextDocumentPositionParams): Promise<Comp
           uri: params.textDocument.uri,
           position: params.position,
         };
-        const items = await movaSdk.suggestCompletions(ctx);
-        if (Array.isArray(items)) return items;
-      } catch (e) {
-        connection.console.warn('movaSdk.suggestCompletions failed:', String(e));
+        const items = movaSdk.suggestCompletions(ctx);
+        if (Array.isArray(items)) {
+          return items.map(item => ({
+            label: item.label,
+            kind: item.kind === 'Function' ? CompletionItemKind.Function :
+                   item.kind === 'Variable' ? CompletionItemKind.Variable :
+                   item.kind === 'Keyword' ? CompletionItemKind.Keyword :
+                   item.kind === 'Property' ? CompletionItemKind.Property :
+                   item.kind === 'Snippet' ? CompletionItemKind.Snippet :
+                   CompletionItemKind.Text,
+            detail: item.detail,
+            documentation: item.documentation,
+            sortText: item.sortText,
+            insertText: item.insertText,
+          }));
+        }
+      } catch (e: unknown) {
+        connection.console.warn(`movaSdk.suggestCompletions failed: ${String(e)}`);
       }
     }
 
@@ -180,14 +191,14 @@ connection.onCompletion(async (params: TextDocumentPositionParams): Promise<Comp
       { label: 'emit_event', kind: CompletionItemKind.Function, detail: 'action: emit event' },
     ];
     return fallback;
-  } catch (err) {
-    connection.console.error('onCompletion error', String(err));
+  } catch (err: unknown) {
+    connection.console.error(`onCompletion error: ${String(err)}`);
     return [];
   }
 });
 
 // Hover handler
-connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | null> => {
+connection.onHover((params: TextDocumentPositionParams): Hover | null => {
   try {
     const doc = documents.get(params.textDocument.uri);
     if (!doc) return null;
@@ -201,8 +212,8 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     if (!node) return null;
 
     return { contents: { kind: 'markdown', value: `**Field**: \`${node.type}\`` } };
-  } catch (e) {
-    connection.console.error('onHover error', String(e));
+  } catch (e: unknown) {
+    connection.console.error(`onHover error: ${String(e)}`);
     return null;
   }
 });
@@ -255,7 +266,7 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
 
     try {
       connection.window.showInformationMessage('Dry-run not yet implemented');
-    } catch (e: any) {
+    } catch (e: unknown) {
       connection.window.showErrorMessage('mova.runPlanDry failed: ' + String(e));
     }
   }

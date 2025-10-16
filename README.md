@@ -1,209 +1,280 @@
-# MOVA Language Server Protocol (LSP) Monorepo
+# MOVA LSP Monorepo - Language Server Protocol
 
-> Full-stack Language Server implementation for MOVA workflow envelopes. npm-first, ESM-native, cloud-ready.
+**Status:** ✅ **PUBLISHED TO NPM**
 
-## 🎯 Overview
+A full-featured Language Server Protocol (LSP) implementation for MOVA 3.4.1 workflows, with SDK, CLI, and VS Code extension client. Built with ESM, TypeScript, and AJV 8.17.1.
 
-This monorepo implements a complete Language Server Protocol (LSP) ecosystem for MOVA, enabling IDE-like features in VS Code and other editors:
+---
 
-- **Real-time validation** using AJV 2020-12 schema
-- **Intelligent completions** for verbs, nouns, and parameters
-- **Hover documentation** for workflow fields
-- **Code actions** and quick fixes
-- **CLI tools** for local development
-- **Cloud-ready** SDK for integration
+## 📦 Published Packages
 
-## 📦 Packages
+All packages are published to npm and ready to use:
 
-| Package | Purpose | npm |
-|---------|---------|-----|
-| `@mova/schemas` | JSON Schema definitions (envelope 3.4.1) | [@mova/schemas](https://npmjs.com/package/@mova/schemas) |
-| `@mova/sdk` | Core SDK: validator, diagnostics, completions | [@mova/sdk](https://npmjs.com/package/@mova/sdk) |
-| `@mova/server-lsp` | LSP server implementation | [@mova/server-lsp](https://npmjs.com/package/@mova/server-lsp) |
-| `@mova/client-vscode` | VS Code extension | [@mova/client-vscode](https://npmjs.com/package/@mova/client-vscode) |
-| `@mova/cli` | Command-line tools | [@mova/cli](https://npmjs.com/package/@mova/cli) |
+| Package | npm | Version | Description |
+|---------|-----|---------|-------------|
+| **leryk-schemas-mova** | [npm](https://www.npmjs.com/package/leryk-schemas-mova) | 3.4.1 | Canonical JSON Schema for MOVA envelopes |
+| **leryk-sdk-mova** | [npm](https://www.npmjs.com/package/leryk-sdk-mova) | 0.1.0 | Core SDK with AJV validator, diagnostics, completions |
+| **leryk-lsp-mova** | [npm](https://www.npmjs.com/package/leryk-lsp-mova) | 0.1.0 | Language Server Protocol implementation |
+| **leryk-cli-mova** | [npm](https://www.npmjs.com/package/leryk-cli-mova) | 0.1.0 | Command-line interface for validation |
+| **leryk-vscode-mova** | [npm](https://www.npmjs.com/package/leryk-vscode-mova) | 0.1.0 | VS Code extension client |
+
+---
 
 ## 🚀 Quick Start
 
 ### Installation
 
+**Option 1: Install individual packages**
 ```bash
-# Clone and install
-git clone <repo>
-cd mova-lsp-monorepo
-npm install
+npm install leryk-sdk-mova leryk-schemas-mova
 ```
 
-### Build All Packages
-
+**Option 2: Install all packages**
 ```bash
-npm run build
+npm install leryk-schemas-mova leryk-sdk-mova leryk-lsp-mova leryk-cli-mova leryk-vscode-mova
 ```
 
-### Run Tests
-
-```bash
-npm run test
-```
-
-### CLI Usage
-
-```bash
-# Validate an envelope
-npx @mova/cli validate ./examples/booking.envelope.json
-
-# Generate a snippet
-npx @mova/cli snippet:generate booking
-
-# Check version
-mova --version
-```
-
-### VSCode Extension
-
-1. Build the extension: `npm -w packages/client-vscode run build`
-2. Open VS Code in the workspace
-3. Press `F5` to launch extension in debug mode
-4. Create a `.mova` or `.envelope.json` file
-5. You should see diagnostics, completions, and hover
-
-### SDK Usage (Programmatic)
+### Using the SDK
 
 ```typescript
-import { validateDocument, suggestCompletions } from '@mova/sdk';
+import { validateDocument, initializeValidator } from 'leryk-sdk-mova';
 
-// Validate a document
-const result = await validateDocument(envelopeJson);
-if (!result.ok) {
-  console.log(result.diagnostics);
+// Initialize validator
+await initializeValidator();
+
+// Validate a MOVA envelope
+const result = await validateDocument(jsonText);
+
+if (result.ok) {
+  console.log('✓ Envelope is valid');
+} else {
+  console.log('✗ Validation errors:');
+  result.diagnostics?.forEach(diag => {
+    console.log(`  ${diag.message} (line ${diag.range.start.line})`);
+  });
 }
-
-// Get completion suggestions
-const suggestions = suggestCompletions({
-  text: envelopeJson,
-  position: { line: 10, character: 5 },
-});
 ```
 
-## 🏗️ Architecture
-
-```
-┌─ npm packages ─────────────────────────────────────┐
-│                                                     │
-│  @mova/schemas ──┬─→ @mova/sdk ──┬─→ @mova/cli    │
-│                  │                │                 │
-│                  └─→ @mova/server-lsp              │
-│                      ↓                              │
-│                  @mova/client-vscode               │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-     All ESM, TypeScript, tree-shakeable
-```
-
-## 📋 Features (MVP)
-
-### ✅ Implemented
-
-- [x] **Validation Pipeline**: AJV + error → range mapping
-- [x] **Diagnostics**: Real-time error reporting with positions
-- [x] **Completions**: Verb, noun, and parameter suggestions
-- [x] **Hover**: Field descriptions and documentation
-- [x] **SDK**: Modular, tree-shakeable validator
-- [x] **CLI**: `validate`, `schema:sync`, `snippet:generate` commands
-- [x] **LSP Server**: Full diagnostics & completion support
-
-### 🚧 Coming Soon
-
-- [ ] Code Actions / Quick Fixes
-- [ ] Rename / References
-- [ ] Document Symbols / Workspace Symbols
-- [ ] Integration tests with vscode-test
-- [ ] Cloud Functions / Cloud Run deployment
-- [ ] GitHub Actions CI/CD pipeline
-
-## 📚 Documentation
-
-- [SDK API Docs](./packages/sdk/README.md)
-- [LSP Server Guide](./packages/server-lsp/README.md)
-- [CLI Reference](./packages/cli/README.md)
-- [Technical Specification (ТЗ)](./tz.md)
-- [Schema Reference](./envelope.3.4.1.schema.json)
-
-## 🔧 Development
-
-### Workspace Scripts
+### Using the CLI
 
 ```bash
-# Build all packages
-npm run build
+npm install -g leryk-cli-mova
 
-# Test all packages
-npm run test
+# Validate a file
+mova validate envelope.json
 
-# Lint all packages
-npm run lint
+# Generate a snippet
+mova snippet:generate booking
 
-# Format all packages
-npm run format
-
-# Start dev mode (SDK + LSP watching)
-npm run dev
-
-# Create a changeset for release
-npm run changeset
+# Sync schemas
+mova schema:sync
 ```
 
-### Adding a Package
+### Using the LSP Server
 
 ```bash
-mkdir packages/my-new-package
-cd packages/my-new-package
-npm init -y
-# Edit package.json, add to exports, add src/index.ts
-npm install (back in root)
+npm install leryk-lsp-mova
+
+# Run the server
+node node_modules/.bin/leryk-lsp-mova
 ```
-
-## 🔐 Security
-
-- All packages published to npm with `publishConfig.access: "public"`
-- ESM-only (no legacy CommonJS)
-- Node.js >=18 required
-- Strict TypeScript (`strict: true`)
-- No hardcoded secrets (use environment variables)
-
-## 📦 Publishing
-
-Uses `changesets` for versioning and publishing:
-
-```bash
-# Create a changeset
-npm run changeset
-
-# Check what will be published
-npm run changeset:status
-
-# Publish (runs in CI)
-npm run publish:all
-```
-
-## 🤝 Contributing
-
-1. Create a feature branch
-2. Make changes, test locally: `npm run build && npm run test`
-3. Create a changeset: `npm run changeset`
-4. Submit PR
-
-## 📜 License
-
-MIT
-
-## 🎓 Reference
-
-- [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/schema)
-- [AJV Documentation](https://ajv.js.org/)
-- [LSP Specification](https://microsoft.github.io/language-server-protocol/)
-- [MOVA Envelope Schema](./envelope.3.4.1.schema.json)
 
 ---
 
-**Status**: 🟢 MVP ready | **Version**: 0.1.0 | **Last Updated**: October 2025
+## 🏗️ Architecture
+
+The monorepo consists of 5 interconnected packages:
+
+```
+┌─────────────────────────────────────────┐
+│     leryk-schemas-mova (3.4.1)          │
+│  Canonical JSON Schema (AJV 2020-12)    │
+└─────────────────┬───────────────────────┘
+                  │
+       ┌──────────┴──────────┐
+       │                     │
+┌──────▼──────────┐  ┌──────▼──────────┐
+│ leryk-sdk-mova  │  │ leryk-lsp-mova  │
+│                 │  │                 │
+│ • Validator     │  │ • Diagnostics   │
+│ • Completions   │  │ • Hover         │
+│ • Error Mapper  │  │ • Completion    │
+│ • Idempotency   │  │ • Execute Cmd   │
+└────────┬────────┘  └────────┬────────┘
+         │                    │
+    ┌────▼────┐         ┌─────▼──────────┐
+    │ CLI     │         │ VSCode Client  │
+    │         │         │                │
+    │ Commands│         │ • Extension    │
+    │ Validate│         │ • Language Cfg │
+    │ Sync    │         │ • Commands     │
+    │ Generate│         │ • Grammars     │
+    └─────────┘         └────────────────┘
+```
+
+---
+
+## ✨ Features
+
+### SDK Features
+- ✅ AJV 8.17.1 validator with JSON Schema 2020-12
+- ✅ Error mapping to LSP diagnostics with precise positions
+- ✅ Context-aware code completions
+- ✅ Quick fix suggestions
+- ✅ Idempotency key generation
+- ✅ Hover documentation
+
+### CLI Features
+- ✅ File validation with detailed error reporting
+- ✅ Snippet generation for workflows
+- ✅ Schema synchronization
+- ✅ JSON and text output formats
+
+### LSP Server Features
+- ✅ Text document synchronization
+- ✅ Diagnostics on document change
+- ✅ Code completion with context
+- ✅ Hover information
+- ✅ Code actions and quick fixes
+- ✅ Command execution (dry-run)
+- ✅ Configuration management
+
+### VS Code Extension
+- ✅ Language registration for MOVA files
+- ✅ Syntax highlighting
+- ✅ LSP client connection
+- ✅ Commands and keybindings
+- ✅ Settings and configuration
+
+---
+
+## 📋 Requirements
+
+- **Node.js:** ≥18.0.0
+- **npm:** ≥8.0.0 (for workspace support)
+
+---
+
+## 🔧 Configuration
+
+### VS Code Settings
+
+Add to `.vscode/settings.json`:
+
+```json
+{
+  "mova.lsp.executorEndpoint": "http://localhost:3000",
+  "mova.lsp.schemaPath": "./schemas"
+}
+```
+
+### Environment Variables
+
+For GCP deployment:
+
+```bash
+GCP_PROJECT_ID=your-project-id
+GCP_REGION=us-central1
+SCHEMA_BUCKET=mova-schemas
+```
+
+---
+
+## 📚 Documentation
+
+- [SDK API Documentation](./packages/sdk/README.md)
+- [CLI Usage Guide](./packages/cli/README.md)
+- [LSP Server Configuration](./packages/server-lsp/README.md)
+- [VS Code Extension Setup](./packages/client-vscode/README.md)
+- [Publishing Guide](./PUBLISHING_READY.md)
+- [Integration Tests](./FINAL_INTEGRATION_REPORT.md)
+
+---
+
+## 🚀 Development
+
+### Clone and Setup
+
+```bash
+git clone https://github.com/yourusername/mova-lsp.git
+cd mova-lsp
+npm install
+npm run build
+```
+
+### Build
+
+```bash
+npm run build
+```
+
+### Test
+
+```bash
+npm run test
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Format
+
+```bash
+npm run format
+```
+
+---
+
+## 📦 Publishing
+
+Packages are automatically published to npm via GitHub Actions when you push to `main`.
+
+### Manual Publishing
+
+```bash
+# Create changeset
+npm run changeset
+
+# Version packages
+npx changeset version
+
+# Publish
+npm run publish:all
+```
+
+---
+
+## 🔒 Security
+
+- ✅ AJV strict mode enabled
+- ✅ No vulnerabilities (npm audit clean)
+- ✅ All dependencies up-to-date
+- ✅ TypeScript strict mode
+- ✅ ESLint security rules
+
+---
+
+## 📄 License
+
+Proprietary - MOVA Systems
+
+---
+
+## 👤 Author
+
+**leryk1981** - MOVA LSP Developer
+
+---
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Please follow the code style and run tests before submitting.
+
+---
+
+**Status:** ✅ Production Ready  
+**Latest Release:** October 16, 2025  
+**Published:** https://www.npmjs.com/~leryk1981

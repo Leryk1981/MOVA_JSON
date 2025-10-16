@@ -9,9 +9,9 @@
   ],
   "scripts": {
     "build": "npm -w packages/schemas run build && npm -w packages/sdk run build && npm -w packages/server-lsp run build && npm -w packages/client-vscode run build && npm -w packages/cli run build",
-    "test": "npm -r run test",
-    "lint": "npm -r run lint",
-    "format": "npm -r run format",
+    "test": "npm -w packages/schemas run test && npm -w packages/sdk run test && npm -w packages/server-lsp run test && npm -w packages/client-vscode run test && npm -w packages/cli run test",
+    "lint": "npm -w packages/schemas run lint && npm -w packages/sdk run lint && npm -w packages/server-lsp run lint && npm -w packages/client-vscode run lint && npm -w packages/cli run lint",
+    "format": "npm -w packages/schemas run format && npm -w packages/sdk run format && npm -w packages/server-lsp run format && npm -w packages/client-vscode run format && npm -w packages/cli run format",
     "dev": "npm -w packages/sdk run dev & npm -w packages/server-lsp run dev",
     "changeset": "changeset",
     "changeset:status": "changeset status",
@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"

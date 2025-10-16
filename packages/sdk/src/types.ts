@@ -1,4 +1,4 @@
-import type Ajv from 'ajv';
+import type { ErrorObject } from 'ajv';
 
 /**
  * Range in a text document (line/column positions)
@@ -33,7 +33,7 @@ export interface Diagnostic {
  */
 export interface ValidateResult {
   ok: boolean;
-  errors?: Array<Ajv.ErrorObject>;
+  errors?: Array<ErrorObject>;
   diagnostics?: Diagnostic[];
 }
 

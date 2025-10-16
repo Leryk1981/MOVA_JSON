@@ -1,4 +1,5 @@
-import Ajv, { type JSONSchemaType } from 'ajv';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import envelopeSchema from '@mova/schemas';
 import type { ValidateResult } from './types.js';
 
@@ -17,10 +18,13 @@ export async function initializeValidator(): Promise<void> {
   }
 
   ajvInstance = new Ajv({
-    strict: true,
+    strict: false,
     allErrors: true,
     verbose: true,
   });
+
+  // Add format validators (uri, email, date-time, etc.)
+  addFormats(ajvInstance);
 
   // Compile the envelope schema
   validateFn = ajvInstance.compile(envelopeSchema);
