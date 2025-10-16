@@ -9,6 +9,14 @@ const require = createRequire(import.meta.url);
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const args = process.argv.slice(2);
 
+if (args[0] === 'publish' && !process.env.NPM_TOKEN) {
+  console.warn(
+    'Skipping "changeset publish" because the NPM_TOKEN environment variable is not configured.'
+  );
+  console.warn('Set NPM_TOKEN to enable publishing in CI or locally.');
+  process.exit(0);
+}
+
 const resolveCliBin = () => {
   const candidates = [];
 
