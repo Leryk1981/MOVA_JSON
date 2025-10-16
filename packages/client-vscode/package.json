@@ -1,6 +1,6 @@
 {
   "name": "leryk-vscode-mova",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MOVA VSCode extension client (thin LSP wrapper)",
   "type": "module",
   "engines": {
@@ -77,8 +77,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "leryk-sdk-mova": "0.1.0",
-    "leryk-lsp-mova": "0.1.0",
+    "leryk-sdk-mova": "0.1.1",
+    "leryk-lsp-mova": "0.1.1",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {

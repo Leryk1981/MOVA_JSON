@@ -1,6 +1,6 @@
 {
   "name": "leryk-lsp-mova",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MOVA Language Server Protocol (LSP) implementation",
   "type": "module",
   "engines": {
@@ -30,7 +30,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "leryk-sdk-mova": "0.1.0",
+    "leryk-sdk-mova": "0.1.1",
     "jsonc-parser": "^3.2.1",
     "vscode-languageserver": "^8.1.0",
     "vscode-languageserver-textdocument": "^1.0.11"
