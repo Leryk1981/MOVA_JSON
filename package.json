@@ -20,11 +20,13 @@
     "dev": "npm -w packages/sdk run dev & npm -w packages/server-lsp run dev",
     "changeset": "changeset",
     "changeset:status": "changeset status",
-    "publish:all": "npm run build && npm run test && npm run lint && changeset publish"
+    "publish:all": "npm run build && npm run test && npm run lint && npx --yes @changesets/cli@^2.29.7 publish"
+  },
+  "dependencies": {
+    "@changesets/cli": "^2.27.1"
   },
   "devDependencies": {
     "@types/node": "file:packages/types-node",
-    "@changesets/cli": "^2.27.1",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
