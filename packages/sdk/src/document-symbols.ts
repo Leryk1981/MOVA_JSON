@@ -6,6 +6,11 @@ export interface DocumentSymbol {
   children?: DocumentSymbol[];
 }
 
+interface PlanStep {
+  verb?: string;
+  noun?: string;
+}
+
 /**
  * Extract document symbols (outline) from envelope
  */
@@ -50,12 +55,13 @@ export function getDocumentSymbols(text: string): DocumentSymbol[] {
 
       // Steps
       if (Array.isArray(parsed.plan.steps)) {
-        parsed.plan.steps.forEach((step: any, index: number) => {
+        parsed.plan.steps.forEach((step: PlanStep, index: number) => {
+          const verb = step.verb ?? 'unknown';
           planSymbol.children?.push({
-            name: `Step ${index + 1}: ${step.verb || 'unknown'}`,
+            name: `Step ${index + 1}: ${verb}`,
             kind: 6, // Method
-            range: findLineRange(text, `"verb": "${step.verb}"`),
-            selectionRange: findLineRange(text, `"verb": "${step.verb}"`)
+            range: findLineRange(text, `"verb": "${verb}"`),
+            selectionRange: findLineRange(text, `"verb": "${verb}"`)
           });
         });
       }

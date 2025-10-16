@@ -3,6 +3,16 @@ export interface FormattingOptions {
   insertSpaces: boolean;
 }
 
+interface Position {
+  line: number;
+  character: number;
+}
+
+interface Range {
+  start: Position;
+  end: Position;
+}
+
 /**
  * Format entire document
  */
@@ -21,7 +31,7 @@ export function formatDocument(text: string, options: FormattingOptions): string
  */
 export function formatRange(
   text: string,
-  range: any,
+  range: Range,
   options: FormattingOptions
 ): string {
   const lines = text.split('\n');

@@ -1,7 +1,22 @@
 export interface WorkspaceSymbol {
   name: string;
   kind: number;
-  location: { uri: string; range: any };
+  location: { uri: string; range: Range };
+}
+
+interface Position {
+  line: number;
+  character: number;
+}
+
+interface Range {
+  start: Position;
+  end: Position;
+}
+
+interface PlanStep {
+  verb?: string;
+  noun?: string;
 }
 
 /**
@@ -29,13 +44,15 @@ export function getWorkspaceSymbols(query: string, allDocuments: Map<string, str
 
         // Search in plan steps
         if (Array.isArray(parsed.plan?.steps)) {
-          parsed.plan.steps.forEach((step: any, index: number) => {
-            const verbMatch = step.verb && step.verb.toLowerCase().includes(query.toLowerCase());
-            const nounMatch = step.noun && step.noun.toLowerCase().includes(query.toLowerCase());
+          parsed.plan.steps.forEach((step: PlanStep, index: number) => {
+            const verb = step.verb ?? '';
+            const noun = step.noun ?? '';
+            const verbMatch = verb.toLowerCase().includes(query.toLowerCase());
+            const nounMatch = noun.toLowerCase().includes(query.toLowerCase());
 
             if (verbMatch || nounMatch) {
               symbols.push({
-                name: `${step.verb}/${step.noun} (Step ${index + 1})`,
+                name: `${verb || 'unknown'}/${noun || 'unknown'} (Step ${index + 1})`,
                 kind: 6, // Method
                 location: {
                   uri,
@@ -45,7 +62,7 @@ export function getWorkspaceSymbols(query: string, allDocuments: Map<string, str
             }
           });
         }
-      } catch (error) {
+      } catch {
         // Skip invalid JSON documents
       }
     });
