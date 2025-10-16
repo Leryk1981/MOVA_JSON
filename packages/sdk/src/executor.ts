@@ -1,20 +1,24 @@
+import type { Envelope, PlanStep, StepSimulationOutput } from './types.js';
+
 export interface ExecutorConfig {
   timeout?: number;
   maxDepth?: number;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
+}
+
+export interface ExecutorStepResult {
+  index: number;
+  verb: string;
+  noun: string;
+  status: 'success' | 'error' | 'skipped';
+  output?: StepSimulationOutput;
+  error?: string;
+  duration: number;
 }
 
 export interface ExecutorResult {
   success: boolean;
-  steps: Array<{
-    index: number;
-    verb: string;
-    noun: string;
-    status: 'success' | 'error' | 'skipped';
-    output?: any;
-    error?: string;
-    duration: number;
-  }>;
+  steps: ExecutorStepResult[];
   totalDuration: number;
   errors: string[];
 }
@@ -35,7 +39,7 @@ export async function executePlanDryRun(
   };
 
   try {
-    const envelope = JSON.parse(envelopeText);
+    const envelope = JSON.parse(envelopeText) as Envelope;
 
     if (!envelope.plan?.steps || !Array.isArray(envelope.plan.steps)) {
       result.success = false;
@@ -44,10 +48,10 @@ export async function executePlanDryRun(
       return result;
     }
 
-    const steps = envelope.plan.steps;
+    const steps = envelope.plan.steps ?? [];
 
     for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
+      const step = steps[i] as PlanStep;
       const stepStart = Date.now();
 
       try {
@@ -67,7 +71,7 @@ export async function executePlanDryRun(
         }
 
         // Simulate step execution
-        const output = await simulateStepExecution(step, config.variables || {});
+        const output = await simulateStepExecution(step, config.variables ?? {});
         result.steps.push({
           index: i,
           verb: step.verb,
@@ -103,14 +107,17 @@ export async function executePlanDryRun(
 /**
  * Simulate step execution (dry-run - no actual side effects)
  */
-async function simulateStepExecution(step: any, variables: Record<string, any>): Promise<any> {
+async function simulateStepExecution(
+  step: PlanStep,
+  variables: Record<string, unknown>
+): Promise<StepSimulationOutput> {
   // Simple simulation without setTimeout
   const output = {
-    verb: step.verb,
-    noun: step.noun,
+    verb: step.verb ?? 'unknown',
+    noun: step.noun ?? 'unknown',
     executedAt: new Date().toISOString(),
-    data: step.data || {},
-    variables: variables
+    data: (step.data as Record<string, unknown>) ?? {},
+    variables
   };
   return output;
 }
@@ -122,7 +129,7 @@ export function validatePlanStructure(envelopeText: string): { valid: boolean; e
   const errors: string[] = [];
 
   try {
-    const envelope = JSON.parse(envelopeText);
+    const envelope = JSON.parse(envelopeText) as Envelope;
 
     if (!envelope.plan) {
       errors.push('Missing plan object');
@@ -140,7 +147,7 @@ export function validatePlanStructure(envelopeText: string): { valid: boolean; e
     }
 
     // Validate each step
-    envelope.plan.steps.forEach((step: any, index: number) => {
+    envelope.plan.steps.forEach((step: PlanStep, index: number) => {
       if (!step.verb) {
         errors.push(`Step ${index}: missing verb`);
       }
