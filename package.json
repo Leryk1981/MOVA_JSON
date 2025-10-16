@@ -18,8 +18,8 @@
     "lint": "npm -w packages/schemas run lint && npm -w packages/sdk run lint && npm -w packages/server-lsp run lint && npm -w packages/client-vscode run lint && npm -w packages/cli run lint",
     "format": "npm -w packages/schemas run format && npm -w packages/sdk run format && npm -w packages/server-lsp run format && npm -w packages/client-vscode run format && npm -w packages/cli run format",
     "dev": "npm -w packages/sdk run dev & npm -w packages/server-lsp run dev",
-    "changeset": "changeset",
-    "changeset:status": "changeset status",
+    "changeset": "node ./scripts/run-changeset.mjs",
+    "changeset:status": "node ./scripts/run-changeset.mjs status",
     "publish:all": "npm run build && npm run test && npm run lint && node ./scripts/run-changeset.mjs publish"
   },
   "dependencies": {
