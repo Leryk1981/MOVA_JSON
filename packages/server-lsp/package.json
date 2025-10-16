@@ -24,6 +24,11 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"
   },
+  "author": {
+    "name": "Sergii Miasoiedov",
+    "email": "contact@mova.io"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
     "leryk-sdk-mova": "0.1.0",
     "jsonc-parser": "^3.2.1",

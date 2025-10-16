@@ -4,6 +4,11 @@
   "description": "MOVA Language Server Protocol (LSP) monorepo with npm-first, ESM architecture",
   "private": true,
   "type": "module",
+  "author": {
+    "name": "Sergii Miasoiedov",
+    "email": "contact@mova.io"
+  },
+  "license": "Apache-2.0",
   "workspaces": [
     "packages/*"
   ],

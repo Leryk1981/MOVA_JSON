@@ -1,41 +1,64 @@
 # Dependencies
-node_modules
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+node_modules/
+.npm
+*.tgz
 
 # Build outputs
-dist
-build
-*.tsbuildinfo
-**/*.js
-**/*.js.map
-**/*.d.ts
-**/*.d.ts.map
+dist/
+build/
+*.js.map
+*.d.ts.map
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # IDE
-.vscode
-.idea
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
 .DS_Store
-.env.local
-.env.*.local
-
-# Test coverage
-coverage
-.nyc_output
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Changesets
-.changeset/pre.json
+# Testing
+coverage/
+.nyc_output/
 
-# OS
-Thumbs.db
+# Development/Process files (not for production repo)
+test-phase*.mjs
+test-barbershop-simple.mjs
+run-integration-tests.sh
+run-integration-tests.ps1
+check-publish-readiness.ps1
+TESTING_STATUS.md
+REAL_TEST_EXECUTION.md
+INTEGRATION_TEST_RESULTS.md
+INTEGRATION_TEST_EXECUTION.md
+INTEGRATION_TEST_PLAN.md
+TEST_RESULTS.md
+TEST_SUMMARY.txt
+IMPLEMENTATION_SUMMARY.md
+IMPLEMENTATION_CHECKLIST.md
+GETTING_STARTED.md
+NEXT_STEPS.md
+NPM_PUBLISHING_GUIDE.md
+PUBLISHING_READY.md
+PUBLICATION_COMPLETE.md
+DOCUMENTATION_COMPLETE.md
+READY_FOR_GITHUB.md
+
+# Barbershop test data (not for production)
+barbershop/
+
+# Changeset
+.changeset/
