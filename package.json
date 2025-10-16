@@ -28,6 +28,9 @@
   "dependencies": {
     "@changesets/cli": "^2.27.1"
   },
+  "dependencies": {
+    "@changesets/cli": "^2.27.1"
+  },
   "devDependencies": {
     "@types/node": "file:packages/types-node",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
