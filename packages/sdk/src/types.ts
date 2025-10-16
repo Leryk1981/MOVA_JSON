@@ -76,3 +76,28 @@ export interface IdempotencyKeyOptions {
   timestamp?: number;
   nonce?: string;
 }
+
+export interface PlanStep {
+  verb?: string;
+  noun?: string;
+  data?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface EnvelopePlan {
+  steps?: PlanStep[];
+  [key: string]: unknown;
+}
+
+export interface Envelope {
+  plan?: EnvelopePlan;
+  [key: string]: unknown;
+}
+
+export interface StepSimulationOutput {
+  verb: string;
+  noun: string;
+  executedAt: string;
+  data: Record<string, unknown>;
+  variables: Record<string, unknown>;
+}
