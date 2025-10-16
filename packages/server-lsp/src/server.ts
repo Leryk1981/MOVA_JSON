@@ -22,7 +22,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { parseTree, findNodeAtLocation, type Node as JsonNode } from 'jsonc-parser';
 
 // Import SDK
-import * as movaSdk from '@mova/sdk';
+import * as movaSdk from 'leryk-sdk-mova';
 
 // Create connection and documents manager
 const connection = createConnection(ProposedFeatures.all);

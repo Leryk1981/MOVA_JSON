@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 import cac from 'cac';
-import { validateDocument, initializeValidator } from '@mova/sdk';
+import { validateDocument, initializeValidator } from 'leryk-sdk-mova';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const cli = cac('mova');

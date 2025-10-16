@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import envelopeSchema from '@mova/schemas';
+import envelopeSchema from 'leryk-schemas-mova';
 import type { ValidateResult } from './types.js';
 
 /**

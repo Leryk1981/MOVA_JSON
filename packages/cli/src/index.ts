@@ -1,1 +1,1 @@
-export * from '@mova/sdk';
+export * from 'leryk-sdk-mova';
