@@ -23,7 +23,7 @@
     "publish:all": "npm run build && npm run test && npm run lint && node ./scripts/run-changeset.mjs publish"
   },
   "dependencies": {
-    "@changesets/changelog-github": "0.5.0",
+    "@changesets/changelog-github": "file:packages/changelog-github",
     "@changesets/cli": "^2.27.1"
   },
   "devDependencies": {
