@@ -9,6 +9,10 @@ import { validateDocument, initializeValidator } from 'leryk-sdk-mova';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const cli = cac('mova');
 
+const writeLine = (message: string): void => {
+  process.stdout.write(`${message}\n`);
+};
+
 // Get version from package.json
 let version = '0.1.0';
 try {
@@ -35,10 +39,10 @@ cli
       const result = await validateDocument(text, file);
 
       if (options.output === 'json') {
-        console.log(JSON.stringify(result, null, 2));
+        writeLine(JSON.stringify(result, null, 2));
       } else {
         if (result.ok) {
-          console.log(`✓ ${file} is valid`);
+          writeLine(`✓ ${file} is valid`);
         } else {
           console.error(`✗ ${file} has validation errors:`);
           if (result.diagnostics) {
@@ -62,9 +66,9 @@ cli
 cli
   .command('schema:sync [url]', 'Sync schemas from remote URL')
   .action(async (url?: string) => {
-    console.log(`Schema sync from: ${url || 'default registry'}`);
+    writeLine(`Schema sync from: ${url || 'default registry'}`);
     // Placeholder for schema sync implementation
-    console.log('Schema sync not yet implemented');
+    writeLine('Schema sync not yet implemented');
   });
 
 /**
@@ -73,7 +77,7 @@ cli
 cli
   .command('snippet:generate <type>', 'Generate a workflow snippet')
   .action(async (type: string) => {
-    console.log(`Generating snippet for type: ${type}`);
+    writeLine(`Generating snippet for type: ${type}`);
     // Placeholder for snippet generation
     const snippet = {
       mova_version: '3.4.1',
@@ -93,7 +97,7 @@ cli
         ],
       },
     };
-    console.log(JSON.stringify(snippet, null, 2));
+    writeLine(JSON.stringify(snippet, null, 2));
   });
 
 cli.parse(process.argv);

@@ -6,7 +6,7 @@ import type { ValidateResult } from './types.js';
 /**
  * Global AJV instance (2020-12 draft)
  */
-let ajvInstance: Ajv;
+let ajvInstance: Ajv | null = null;
 let validateFn: ReturnType<Ajv['compile']> | null = null;
 
 /**
@@ -70,5 +70,5 @@ export function getAjvInstance(): Ajv {
  */
 export function resetValidator(): void {
   validateFn = null;
-  ajvInstance = null as any;
+  ajvInstance = null;
 }
