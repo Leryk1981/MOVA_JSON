@@ -1,0 +1,8 @@
+{
+  "name": "@types/node",
+  "version": "20.19.21",
+  "private": true,
+  "description": "Minimal Node.js type shims for offline builds",
+  "type": "module",
+  "types": "index.d.ts"
+}
