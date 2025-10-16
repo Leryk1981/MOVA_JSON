@@ -39,7 +39,7 @@
     "leryk-schemas-mova": "3.4.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.6",
+    "@types/node": "file:../types-node",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
