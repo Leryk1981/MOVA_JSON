@@ -1,6 +1,6 @@
 {
   "name": "leryk-sdk-mova",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MOVA SDK: AJV validator, diagnostics mapper, completion suggestions, utilities",
   "type": "module",
   "engines": {
