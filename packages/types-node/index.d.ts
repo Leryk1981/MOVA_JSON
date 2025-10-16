@@ -46,6 +46,15 @@ declare namespace NodeJS {
 
 declare const process: NodeJS.Process;
 
+interface Console {
+  log(...data: unknown[]): void;
+  error(...data: unknown[]): void;
+  warn(...data: unknown[]): void;
+  info(...data: unknown[]): void;
+}
+
+declare const console: Console;
+
 interface ImportMeta {
   url: string;
 }
