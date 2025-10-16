@@ -61,5 +61,6 @@ READY_FOR_GITHUB.md
 barbershop/
 
 # Changeset
-.changeset/
+.changeset/*
 !.changeset/*.md
+!.changeset/changelog-github.cjs
