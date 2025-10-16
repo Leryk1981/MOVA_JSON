@@ -12,6 +12,16 @@ declare module 'path' {
   export function dirname(path: string): string;
 }
 
+declare module 'crypto' {
+  interface Hash {
+    update(data: string | Uint8Array): Hash;
+    digest(): Uint8Array;
+    digest(encoding: 'hex' | 'base64' | 'base64url'): string;
+  }
+
+  export function createHash(algorithm: string): Hash;
+}
+
 declare module 'url' {
   type FileLike = string | { href: string };
   export function fileURLToPath(path: FileLike): string;
