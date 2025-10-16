@@ -123,3 +123,6 @@ module.exports = {
   getReleaseLine,
   getDependencyReleaseLine,
 };
+
+module.exports = exported;
+module.exports.default = exported;
