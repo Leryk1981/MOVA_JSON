@@ -1,3 +1,5 @@
+import type { Envelope, PlanStep } from './types.js';
+
 export interface SemanticError {
   path: string;
   type: 'unknown-verb' | 'unknown-noun' | 'invalid-context' | 'missing-required-field' | 'type-mismatch';
@@ -61,7 +63,7 @@ export function performSemanticAnalysis(envelopeText: string): SemanticAnalysisR
   };
 
   try {
-    const envelope = JSON.parse(envelopeText);
+    const envelope = JSON.parse(envelopeText) as Envelope;
 
     if (!envelope.plan?.steps || !Array.isArray(envelope.plan.steps)) {
       result.errors.push({
@@ -75,7 +77,7 @@ export function performSemanticAnalysis(envelopeText: string): SemanticAnalysisR
     }
 
     // Analyze each step
-    envelope.plan.steps.forEach((step: any, index: number) => {
+    envelope.plan.steps.forEach((step: PlanStep, index: number) => {
       analyzeStep(step, index, result);
     });
 
@@ -96,7 +98,7 @@ export function performSemanticAnalysis(envelopeText: string): SemanticAnalysisR
 /**
  * Analyze individual step for semantic errors
  */
-function analyzeStep(step: any, index: number, result: SemanticAnalysisResult): void {
+function analyzeStep(step: PlanStep, index: number, result: SemanticAnalysisResult): void {
   const pathPrefix = `plan.steps[${index}]`;
 
   // Check required fields
@@ -148,7 +150,7 @@ function analyzeStep(step: any, index: number, result: SemanticAnalysisResult): 
 
   // Validate data fields
   if (step.data && typeof step.data === 'object') {
-    analyzeData(step.data, pathPrefix, result, step.noun);
+    analyzeData(step.data as Record<string, unknown>, pathPrefix, result, step.noun ?? '');
   }
 
   // Check for common issues
@@ -177,7 +179,7 @@ function analyzeStep(step: any, index: number, result: SemanticAnalysisResult): 
  * Analyze step data for semantic errors
  */
 function analyzeData(
-  data: any,
+  data: Record<string, unknown>,
   basePath: string,
   result: SemanticAnalysisResult,
   noun: string
@@ -207,7 +209,7 @@ export function getSemanticSuggestions(envelopeText: string, atPath: string): st
   const suggestions: string[] = [];
 
   try {
-    const envelope = JSON.parse(envelopeText);
+    const envelope = JSON.parse(envelopeText) as Envelope;
 
     if (atPath.includes('verb')) {
       suggestions.push('Available verbs: ' + Object.keys(VERB_NOUN_MAP).join(', '));
@@ -237,7 +239,7 @@ export function getSemanticSuggestions(envelopeText: string, atPath: string): st
         }
       }
     }
-  } catch (error) {
+  } catch {
     // Ignore parse errors
   }
 
