@@ -95,11 +95,7 @@ async function getReleaseLine(changeset, _type, options) {
   return `- ${cleaned || summary}${meta}`;
 }
 
-async function getDependencyReleaseLine(
-  changesets,
-  dependenciesUpdated,
-  options,
-) {
+async function getDependencyReleaseLine(changesets, dependenciesUpdated, options) {
   if (!dependenciesUpdated || dependenciesUpdated.length === 0) {
     return "";
   }
@@ -123,7 +119,7 @@ async function getDependencyReleaseLine(
   return [header, ...lines].join("\n");
 }
 
-const exported = {
+module.exports = {
   getReleaseLine,
   getDependencyReleaseLine,
 };
