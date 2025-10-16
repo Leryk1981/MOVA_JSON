@@ -1,0 +1,91 @@
+{
+  "mova_version": "3.4.1",
+  "envelope_id": "envelope_booking_v1",
+  "category": "booking",
+  "title": "Simple Booking Workflow",
+  "summary": "Basic workflow for processing a booking request",
+  "status": "ready",
+  "metadata": {
+    "author": "developer@example.com",
+    "created_at": "2025-10-16T10:00:00Z"
+  },
+  "policies": {
+    "idempotency_key": "booking:{{user_id}}:{{timestamp}}",
+    "budget_ms": 30000,
+    "retry": {
+      "max_attempts": 3,
+      "backoff_ms": 1000,
+      "jitter": true
+    }
+  },
+  "context": {
+    "user_id": "user_123",
+    "booking_date": "2025-11-01",
+    "num_guests": 2
+  },
+  "plan": {
+    "objectives": [
+      "Validate booking request",
+      "Reserve availability",
+      "Confirm booking"
+    ],
+    "steps": [
+      {
+        "id": "step_validate",
+        "verb": "assert",
+        "title": "Validate booking data",
+        "with": {
+          "condition": "{{num_guests > 0}}",
+          "message": "Number of guests must be greater than 0"
+        }
+      },
+      {
+        "id": "step_check_availability",
+        "verb": "http_fetch",
+        "title": "Check availability",
+        "with": {
+          "url": "https://api.example.com/availability",
+          "method": "GET",
+          "timeout_ms": 5000
+        }
+      },
+      {
+        "id": "step_reserve",
+        "verb": "call",
+        "title": "Reserve booking slot",
+        "with": {
+          "service": "booking_service",
+          "task": "reserve",
+          "input": {
+            "user_id": "{{user_id}}",
+            "date": "{{booking_date}}",
+            "guests": "{{num_guests}}"
+          },
+          "timeout_ms": 10000
+        }
+      },
+      {
+        "id": "step_confirm",
+        "verb": "emit_event",
+        "title": "Confirm booking",
+        "with": {
+          "event": "booking.confirmed",
+          "payload": {
+            "booking_id": "{{step_reserve.booking_id}}",
+            "user_id": "{{user_id}}"
+          },
+          "target": "booking_events"
+        }
+      },
+      {
+        "id": "step_log",
+        "verb": "log",
+        "title": "Log booking completion",
+        "with": {
+          "message": "Booking {{step_reserve.booking_id}} confirmed for user {{user_id}}",
+          "level": "info"
+        }
+      }
+    ]
+  }
+}

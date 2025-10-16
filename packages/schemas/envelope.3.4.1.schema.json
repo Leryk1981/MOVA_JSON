@@ -1,0 +1,1512 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mova.systems/schemas/envelope.3.4.1.schema.json",
+  "title": "MOVA Envelope 3.4.1 (Final)",
+  "description": "Production-ready MOVA 3.4.1 envelope with 6 core verbs, 4 auxiliary verbs, policies, validation and observability. Schema upgraded to JSON Schema Draft 2020-12 (October 2025).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mova_version",
+    "envelope_id",
+    "category",
+    "title",
+    "summary",
+    "plan"
+  ],
+  "properties": {
+    "mova_version": {
+      "type": "string",
+      "pattern": "^3\\.4\\.(0|[1-9]\\d*)$",
+      "description": "Semantic version constrained to 3.4.x line."
+    },
+    "envelope_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for this workflow envelope."
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Routing/permission category (e.g., data_processing, api_integration)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable title for the workflow."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Brief description of what this workflow does."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "approved",
+        "executed",
+        "failed",
+        "cancelled",
+        "archived"
+      ],
+      "description": "Current lifecycle status of the workflow."
+    },
+    "links": {
+      "type": "array",
+      "description": "HATEOAS-style links for related resources.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rel",
+          "href"
+        ],
+        "properties": {
+          "rel": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Link relationship type (e.g., 'self', 'documentation')."
+          },
+          "href": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the related resource."
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Free-form input data consumed by workflow steps. Optional but recommended for parameterized workflows.",
+      "additionalProperties": true,
+      "default": {}
+    },
+    "iav": {
+      "type": "object",
+      "description": "Integrated Audit & Validation metadata. Tracks validation results and audit trail.",
+      "additionalProperties": false,
+      "properties": {
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether validation is enabled for this envelope."
+            },
+            "engine": {
+              "type": "string",
+              "description": "Validation engine used (e.g., 'ajv', 'joi')."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "valid",
+                "invalid"
+              ],
+              "description": "Current validation status."
+            }
+          }
+        },
+        "results": {
+          "type": "array",
+          "description": "Detailed validation results.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "JSON path to the field with an issue."
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable validation message."
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "info",
+                  "warn",
+                  "error"
+                ],
+                "description": "Severity level of the validation issue."
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Workflow metadata for tracking creation, updates, and ownership.",
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Email or ID of the workflow author."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of workflow creation."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last update."
+        },
+        "timezone": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_\\-/]+$",
+          "description": "Timezone for workflow execution (e.g., 'America/New_York')."
+        }
+      }
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Internationalization settings.",
+      "additionalProperties": false,
+      "properties": {
+        "locale": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+          "description": "Locale for the workflow (e.g., 'en-US', 'fr-FR')."
+        }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "description": "Execution policies for the workflow.",
+      "additionalProperties": false,
+      "properties": {
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Key to ensure idempotent execution."
+        },
+        "budget_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum execution time budget in milliseconds."
+        },
+        "retry": {
+          "$ref": "#/definitions/retryPolicy"
+        },
+        "dlq": {
+          "$ref": "#/definitions/dlqPolicy"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Information about the workflow's origin and tooling.",
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Unique author identifier."
+            },
+            "name": {
+              "type": "string",
+              "description": "Human-readable author name."
+            }
+          }
+        },
+        "tool": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Name of the tool that created this workflow."
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Version of the tool."
+            }
+          }
+        }
+      }
+    },
+    "trace": {
+      "type": "object",
+      "description": "Distributed tracing identifiers.",
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique identifier for this workflow execution."
+        },
+        "parent_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Parent workflow run ID if this is a sub-workflow."
+        },
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Correlation ID for tracking across multiple workflows."
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "description": "Security and cryptographic signatures.",
+      "additionalProperties": false,
+      "properties": {
+        "signature": {
+          "type": "object",
+          "description": "Digital signature for envelope integrity.",
+          "additionalProperties": false,
+          "properties": {
+            "alg": {
+              "type": "string",
+              "description": "Signing algorithm (e.g., 'RS256', 'HS256')."
+            },
+            "key_id": {
+              "type": "string",
+              "description": "Identifier of the signing key."
+            },
+            "value": {
+              "type": "string",
+              "description": "Base64-encoded signature value."
+            }
+          }
+        }
+      }
+    },
+    "headers": {
+      "type": "object",
+      "description": "Default headers for all http_fetch steps in this workflow.",
+      "additionalProperties": true
+    },
+    "actor": {
+      "type": "object",
+      "description": "Information about who/what is executing this workflow.",
+      "additionalProperties": false,
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "User ID executing the workflow."
+        },
+        "role": {
+          "type": "string",
+          "description": "User role (e.g., 'admin', 'operator')."
+        },
+        "team": {
+          "type": "string",
+          "description": "Team the user belongs to."
+        }
+      }
+    },
+    "globalCatalogs": {
+      "type": "object",
+      "description": "Global catalogs for roles, resources, schemas, states, transitions, triggers, rules, and time constraints.",
+      "additionalProperties": false,
+      "properties": {
+        "roles": {
+          "type": "array",
+          "description": "Catalog of roles and actors in the system.",
+          "items": { "$ref": "#/definitions/role" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "resources": {
+          "type": "array",
+          "description": "Catalog of system resources.",
+          "items": { "$ref": "#/definitions/resource" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "dataSchemas": {
+          "type": "array",
+          "description": "Catalog of data schemas for validation.",
+          "items": { "$ref": "#/definitions/dataSchema" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "states": {
+          "type": "array",
+          "description": "Catalog of workflow states.",
+          "items": { "$ref": "#/definitions/state" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "transitions": {
+          "type": "array",
+          "description": "Catalog of state transitions.",
+          "items": { "$ref": "#/definitions/transition" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "triggers": {
+          "type": "array",
+          "description": "Catalog of workflow triggers.",
+          "items": { "$ref": "#/definitions/trigger" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "rules": {
+          "type": "array",
+          "description": "Catalog of business rules and conditions.",
+          "items": { "$ref": "#/definitions/rule" },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "timeConstraints": {
+          "type": "array",
+          "description": "Catalog of time constraints and deadlines.",
+          "items": { "$ref": "#/definitions/timeConstraint" },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "description": "The execution plan containing objectives and steps.",
+      "additionalProperties": false,
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "objectives": {
+          "type": "array",
+          "description": "High-level business objectives for this workflow.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Sequential list of steps to execute.",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "retryPolicy": {
+      "type": "object",
+      "description": "Policy for retrying failed operations.",
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of retry attempts (0 = no retries)."
+        },
+        "backoff_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Base backoff delay in milliseconds between retries."
+        },
+        "jitter": {
+          "type": "boolean",
+          "description": "Whether to add random jitter to backoff delays."
+        }
+      }
+    },
+    "dlqPolicy": {
+      "type": "object",
+      "description": "Dead Letter Queue policy for failed workflows.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether DLQ is enabled."
+        },
+        "topic": {
+          "type": "string",
+          "description": "DLQ topic or queue name."
+        },
+        "replay_allowed": {
+          "type": "boolean",
+          "description": "Whether failed workflows can be replayed from DLQ."
+        }
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+          "required": ["id", "name", "type"],
+          "properties": {
+            "id": { 
+              "type": "string", 
+              "pattern": "^role:[a-z0-9:_\\-]+$",
+              "description": "Unique role identifier with role: prefix."
+            },
+            "name": { 
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable role name."
+            },
+            "description": { 
+              "type": "string",
+              "description": "Role description."
+            },
+            "type": { 
+              "type": "string", 
+              "enum": ["human", "system", "bot", "group", "role"],
+              "description": "Type of role/actor."
+            },
+            "contact": { 
+              "type": "object", 
+              "additionalProperties": true,
+              "description": "Contact information for the role."
+            },
+            "capabilities": { 
+              "type": "array", 
+              "items": { "type": "string" },
+              "description": "List of capabilities this role has."
+            }
+          }
+        },
+        "resource": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "resourceName", "resourceType"],
+          "properties": {
+            "id": { 
+              "type": "string", 
+              "pattern": "^res:[a-z0-9:_\\-]+$",
+              "description": "Unique resource identifier with res: prefix."
+            },
+            "resourceName": { 
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable resource name."
+            },
+            "description": { 
+              "type": "string",
+              "description": "Resource description."
+            },
+            "resourceType": { 
+              "type": "string", 
+              "enum": ["software", "hardware", "api", "db"],
+              "description": "Type of resource."
+            },
+            "connection": { 
+              "type": "object", 
+              "additionalProperties": true,
+              "description": "Connection configuration for the resource."
+            }
+          }
+        },
+        "dataSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name", "schema"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^ds:[a-z0-9:_\\-]+$",
+              "description": "Unique schema identifier with ds: prefix."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable schema name."
+            },
+            "description": {
+              "type": "string",
+              "description": "Schema description."
+            },
+            "schema": {
+              "type": "object",
+              "description": "JSON Schema definition."
+            },
+            "scope": {
+              "type": "string",
+              "description": "Schema scope (e.g., 'global', 'workflow', 'step')."
+            }
+          }
+        },
+        "state": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name", "type"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^st:[a-z0-9:_\\-]+$",
+              "description": "Unique state identifier with st: prefix."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable state name."
+            },
+            "description": {
+              "type": "string",
+              "description": "State description."
+            },
+            "type": {
+              "type": "string",
+              "enum": ["initial", "intermediate", "final", "error"],
+              "description": "Type of state."
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Additional state metadata."
+            }
+          }
+        },
+        "transition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "fromStateId", "toStateId"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^tr:[a-z0-9:_\\-]+$",
+              "description": "Unique transition identifier with tr: prefix."
+            },
+            "name": {
+              "type": "string",
+              "description": "Human-readable transition name."
+            },
+            "description": {
+              "type": "string",
+              "description": "Transition description."
+            },
+            "fromStateId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Source state identifier."
+            },
+            "toStateId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Target state identifier."
+            },
+            "actionId": {
+              "type": "string",
+              "description": "Action to execute during transition."
+            }
+          }
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "targetActionId"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^tg:[a-z0-9:_\\-]+$",
+              "description": "Unique trigger identifier with tg: prefix."
+            },
+            "name": {
+              "type": "string",
+              "description": "Human-readable trigger name."
+            },
+            "description": {
+              "type": "string",
+              "description": "Trigger description."
+            },
+            "type": {
+              "type": "string",
+              "enum": ["manual", "temporal", "event", "data_driven"],
+              "description": "Type of trigger."
+            },
+            "configuration": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Trigger-specific configuration."
+            },
+            "targetActionId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Action to trigger."
+            }
+          }
+        },
+        "rule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "condition", "scope"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^rule:[a-z0-9:_\\-]+$",
+              "description": "Unique rule identifier with rule: prefix."
+            },
+            "name": {
+              "type": "string",
+              "description": "Human-readable rule name."
+            },
+            "description": {
+              "type": "string",
+              "description": "Rule description."
+            },
+            "condition": {
+              "type": "object",
+              "description": "Rule condition definition."
+            },
+            "scope": {
+              "type": "string",
+              "enum": ["transition", "action", "workflow", "data_validation"],
+              "description": "Rule scope."
+            },
+            "actionsOnTrue": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Actions to execute when condition is true."
+            },
+            "actionsOnFalse": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Actions to execute when condition is false."
+            }
+          }
+        },
+        "timeConstraint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "type", "target"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^tc:[a-z0-9:_\\-]+$",
+              "description": "Unique constraint identifier with tc: prefix."
+            },
+            "name": {
+              "type": "string",
+              "description": "Human-readable constraint name."
+            },
+            "description": {
+              "type": "string",
+              "description": "Constraint description."
+            },
+            "type": {
+              "type": "string",
+              "enum": ["deadline", "timeout", "delay", "recurrence"],
+              "description": "Type of time constraint."
+            },
+            "target": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "id"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["action", "state", "transition", "workflow"],
+                  "description": "Type of target."
+                },
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Target identifier."
+                }
+              }
+            },
+            "configuration": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Constraint-specific configuration."
+            }
+          }
+        },
+    "step": {
+      "type": "object",
+      "description": "A single step in the workflow execution plan.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "verb"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique step identifier within this workflow."
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable step title."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Brief description of what this step does."
+        },
+        "note": {
+          "type": "string",
+          "description": "Developer notes or implementation details."
+        },
+        "verb": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "http_fetch",
+                "call",
+                "call_envelope",
+                "template",
+                "transform",
+                "parallel",
+                "assert",
+                "emit_event",
+                "log",
+                "sleep",
+                "if",
+                "switch",
+                "parallel_split",
+                "parallel_merge"
+              ],
+              "description": "14 built-in verbs: 6 core (http_fetch, call, call_envelope, template, transform, parallel) + 4 auxiliary (assert, emit_event, log, sleep) + 4 flow control (if, switch, parallel_split, parallel_merge). See docs/VERBS-DECOMPOSITION.md"
+            },
+            {
+              "type": "string",
+              "pattern": "^plugin:[a-z][a-z0-9_]*$",
+              "minLength": 8,
+              "description": "Plugin verbs: Must start with 'plugin:' prefix followed by snake_case name (e.g., 'plugin:db_query', 'plugin:send_email'). Custom validation defined by plugin registry."
+            }
+          ]
+        },
+        "with": {
+          "type": "object",
+          "description": "Verb-specific parameters."
+        },
+        "retry_policy": {
+          "$ref": "#/definitions/retryPolicy",
+          "description": "Step-level retry policy (overrides global policy)."
+        },
+        "actorRoleId": {
+          "type": "string",
+          "pattern": "^role:[a-z0-9:_\\-]+$",
+          "description": "Reference to role in globalCatalogs.roles (must exist in globalCatalogs.roles)."
+        },
+        "resourceId": {
+          "type": "string",
+          "pattern": "^res:[a-z0-9:_\\-]+$",
+          "description": "Reference to resource in globalCatalogs.resources (must exist in globalCatalogs.resources)."
+        },
+        "inputDataSchemaId": {
+          "type": "string",
+          "pattern": "^ds:[a-z0-9:_\\-]+$",
+          "description": "Reference to data schema in globalCatalogs.dataSchemas (must exist in globalCatalogs.dataSchemas)."
+        },
+        "outputDataSchemaId": {
+          "type": "string",
+          "pattern": "^ds:[a-z0-9:_\\-]+$",
+          "description": "Reference to data schema in globalCatalogs.dataSchemas (must exist in globalCatalogs.dataSchemas)."
+        },
+        "stateFrom": {
+          "type": "string",
+          "pattern": "^st:[a-z0-9:_\\-]+$",
+          "description": "Reference to state in globalCatalogs.states (must exist in globalCatalogs.states)."
+        },
+        "stateTo": {
+          "type": "string",
+          "pattern": "^st:[a-z0-9:_\\-]+$",
+          "description": "Reference to state in globalCatalogs.states (must exist in globalCatalogs.states)."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "http_fetch"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "url"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "pattern": "^(https?://|\\$\\{)",
+                    "description": "Target URL for the HTTP request. Can be absolute URI (http://, https://) or template expression (${...})."
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE",
+                      "HEAD",
+                      "OPTIONS"
+                    ],
+                    "default": "GET",
+                    "description": "HTTP method."
+                  },
+                  "headers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "HTTP headers (merged with envelope-level headers)."
+                  },
+                  "timeout_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Request timeout in milliseconds."
+                  },
+                  "body": {
+                    "description": "Request body (string or any JSON-serializable value)."
+                  },
+                  "json": {
+                    "description": "Shorthand for JSON body (automatically sets Content-Type)."
+                  },
+                  "idempotency_key": {
+                    "type": "string",
+                    "description": "Idempotency key for this specific request."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "call"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "service",
+                  "task"
+                ],
+                "properties": {
+                  "service": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Name of the service to call (e.g., 'payment_processor')."
+                  },
+                  "task": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Task or method to invoke (e.g., 'charge_customer')."
+                  },
+                  "input": {
+                    "description": "Input data to pass to the service."
+                  },
+                  "timeout_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Call timeout in milliseconds."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "if"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "condition",
+                  "then"
+                ],
+                "properties": {
+                  "condition": {
+                    "description": "Condition to evaluate. Can be expression string or boolean."
+                  },
+                  "then": {
+                    "type": "array",
+                    "description": "Steps to execute if condition is true.",
+                    "items": {
+                      "$ref": "#/definitions/step"
+                    }
+                  },
+                  "else": {
+                    "type": "array",
+                    "description": "Steps to execute if condition is false (optional).",
+                    "items": {
+                      "$ref": "#/definitions/step"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "switch"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "on",
+                  "cases"
+                ],
+                "properties": {
+                  "on": {
+                    "description": "Expression to evaluate for switch statement."
+                  },
+                  "cases": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Array of case branches.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "when",
+                        "steps"
+                      ],
+                      "properties": {
+                        "when": {
+                          "description": "Value or condition to match."
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/definitions/step"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "default": {
+                    "type": "array",
+                    "description": "Default steps if no case matches (optional).",
+                    "items": {
+                      "$ref": "#/definitions/step"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "parallel"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "steps"
+                ],
+                "properties": {
+                  "steps": {
+                    "type": "array",
+                    "minItems": 1,
+                    "description": "Array of steps to execute in parallel.",
+                    "items": {
+                      "$ref": "#/definitions/step"
+                    }
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "race",
+                      "allSettled"
+                    ],
+                    "default": "all",
+                    "description": "Execution mode: 'all' waits for all, 'race' returns first, 'allSettled' waits but doesn't fail on errors."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "template"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Template string with placeholders (e.g., 'Hello {{name}}')."
+                  },
+                  "vars": {
+                    "type": "object",
+                    "description": "Variables to inject into the template."
+                  },
+                  "engine": {
+                    "type": "string",
+                    "enum": [
+                      "mustache",
+                      "handlebars",
+                      "jinja2"
+                    ],
+                    "default": "mustache",
+                    "description": "Template engine to use."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "transform"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "set",
+                      "parse",
+                      "map",
+                      "filter",
+                      "reduce"
+                    ],
+                    "description": "Type of transformation: 'set' for setting vars, 'parse' for parsing, 'map'/'filter'/'reduce' for array ops."
+                  },
+                  "set": {
+                    "type": "object",
+                    "description": "Variables to set (for 'set' operation)."
+                  },
+                  "source": {
+                    "description": "Source data to transform."
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "xml",
+                      "yaml",
+                      "csv"
+                    ],
+                    "description": "Format to parse (for 'parse' operation)."
+                  },
+                  "expression": {
+                    "type": "string",
+                    "description": "Transformation expression (e.g., JSONPath, JMESPath)."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Variable name to store the result."
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "operation",
+                      "set"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "operation",
+                      "source"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "assert"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "condition": {
+                    "description": "Condition to assert (expression or boolean)."
+                  },
+                  "that": {
+                    "type": [
+                      "string",
+                      "boolean",
+                      "number",
+                      "object",
+                      "array",
+                      "null"
+                    ],
+                    "description": "Alternative: direct value to assert as truthy."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Custom error message if assertion fails."
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "condition"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "that"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "emit_event"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "event"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Event name to emit."
+                  },
+                  "payload": {
+                    "type": "object",
+                    "description": "Event payload data."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Target system or topic for the event."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "log"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "message"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Log message."
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "debug",
+                      "info",
+                      "warn",
+                      "error"
+                    ],
+                    "default": "info",
+                    "description": "Log level."
+                  },
+                  "data": {
+                    "type": "object",
+                    "description": "Structured data to log."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "sleep"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ms"
+                ],
+                "properties": {
+                  "ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 600000,
+                    "description": "Sleep duration in milliseconds (max 10 minutes)."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "parallel_split"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "branches"
+                ],
+                "properties": {
+                  "branches": {
+                    "type": "array",
+                    "minItems": 2,
+                    "description": "Array of branch definitions for parallel execution.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "branch_id"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Human-readable name for the branch."
+                        },
+                        "branch_id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Unique identifier for the branch."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "parallel_merge"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "branch_ids"
+                ],
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "race",
+                      "allSettled"
+                    ],
+                    "default": "all",
+                    "description": "Merge mode: 'all' waits for all branches, 'race' returns first, 'allSettled' waits but doesn't fail on errors."
+                  },
+                  "branch_ids": {
+                    "type": "array",
+                    "minItems": 2,
+                    "description": "Array of branch IDs to merge.",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "call_envelope"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "target_envelope_id"
+                ],
+                "properties": {
+                  "target_envelope_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "ID of the envelope to call as a module."
+                  },
+                  "input": {
+                    "description": "Input data to pass to the called envelope."
+                  },
+                  "timeout_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Timeout for the envelope call in milliseconds."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "type": "string",
+                "pattern": "^plugin:"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "with"
+            ],
+            "properties": {
+              "with": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Plugin-specific parameters. Schema defined by plugin registry. Must be validated by the plugin before execution."
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

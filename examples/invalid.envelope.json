@@ -1,0 +1,16 @@
+{
+  "mova_version": "4.0.0",
+  "title": "Invalid Workflow",
+  "category": "test",
+  "plan": {
+    "steps": [
+      {
+        "id": "step1",
+        "verb": "unknown_verb",
+        "with": {
+          "invalid_param": "value"
+        }
+      }
+    ]
+  }
+}

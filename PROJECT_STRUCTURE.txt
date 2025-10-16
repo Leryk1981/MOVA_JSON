@@ -1,0 +1,180 @@
+MOVA LSP Monorepo - Project Structure
+=====================================
+
+mova-lsp-monorepo/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                    # Build, test, lint on push/PR
+│       └── publish.yml               # npm publish on main merge
+│
+├── .changeset/
+│   └── config.json                   # Versioning configuration
+│
+├── packages/
+│   ├── schemas/                      # @mova/schemas (3.4.1)
+│   │   ├── src/
+│   │   │   └── index.ts              # Export envelope schema
+│   │   ├── envelope.3.4.1.schema.json # MOVA schema (JSON Schema 2020-12)
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── sdk/                          # @mova/sdk (core validator)
+│   │   ├── src/
+│   │   │   ├── index.ts              # Main exports
+│   │   │   ├── types.ts              # Type definitions
+│   │   │   ├── validator.ts          # AJV initialization & validation
+│   │   │   ├── document-validator.ts # Text document validation
+│   │   │   ├── error-mapper.ts       # AJV errors → LSP diagnostics
+│   │   │   ├── completions.ts        # Completion suggestions
+│   │   │   └── idempotency.ts        # Key generation utilities
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── README.md
+│   │
+│   ├── server-lsp/                   # @mova/server-lsp (LSP server)
+│   │   ├── src/
+│   │   │   └── server.ts             # Full LSP implementation
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── README.md
+│   │
+│   ├── client-vscode/                # @mova/client-vscode (VSCode extension)
+│   │   ├── src/
+│   │   │   └── extension.ts          # Extension entrypoint
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── README.md
+│   │
+│   ├── cli/                          # @mova/cli (CLI tools)
+│   │   ├── src/
+│   │   │   ├── cli.ts                # CLI entry point (bin)
+│   │   │   └── index.ts              # Programmatic exports
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── README.md
+│   │
+│   └── cloud/                        # Cloud deployments (optional)
+│       ├── validate/                 # Cloud Function: validate
+│       └── runner/                   # Cloud Run: dry-run
+│
+├── examples/
+│   ├── booking.envelope.json         # Valid sample envelope
+│   └── invalid.envelope.json         # Invalid sample for testing
+│
+├── .eslintrc.json                    # ESLint configuration
+├── .prettierrc.json                  # Prettier configuration
+├── .gitignore                        # Git ignores
+├── tsconfig.json                     # Root TypeScript config
+├── package.json                      # Root monorepo config (npm workspaces)
+├── package-lock.json                 # Locked dependencies
+│
+├── README.md                         # Main documentation
+├── tz.md                             # Technical specification (Russian)
+├── envelope.3.4.1.schema.json       # Original schema file
+│
+└── PROJECT_STRUCTURE.txt             # This file
+
+PACKAGE DEPENDENCIES
+====================
+
+@mova/schemas (independent)
+    └─→ no dependencies (embedded schema)
+
+@mova/sdk
+    ├─→ @mova/schemas (for envelope schema)
+    ├─→ ajv@8.17.1 (AJV 2020-12 validator)
+    └─→ jsonc-parser@3.2.1 (position mapping)
+
+@mova/server-lsp
+    ├─→ @mova/sdk (validation pipeline)
+    ├─→ vscode-languageserver@8.1.0
+    ├─→ vscode-languageserver-textdocument@1.3.0
+    └─→ jsonc-parser@3.2.1 (for error mapping)
+
+@mova/client-vscode
+    ├─→ @mova/sdk (optional, for client-side features)
+    ├─→ @mova/server-lsp (spawn LSP process)
+    └─→ vscode-languageclient@9.0.1
+
+@mova/cli
+    ├─→ @mova/sdk (for validation, completions, etc.)
+    └─→ cac@6.7.14 (CLI framework)
+
+KEY FEATURES
+============
+
+✅ Implemented:
+  - Validation pipeline (AJV + error→range mapping)
+  - Diagnostics with precise positions (line:character)
+  - Completions (14 core verbs + nouns)
+  - Hover documentation
+  - CLI commands (validate, schema:sync, snippet:generate)
+  - LSP server with full diagnostics + completions
+  - ESM-only, TypeScript strict mode
+  - npm workspaces, each package publishable independently
+
+🚧 Coming Soon:
+  - Unit/integration tests
+  - Code actions & quick fixes
+  - Cloud Functions / Cloud Run deployment
+  - Performance profiling
+  - Security review
+
+BUILD & PUBLISH
+===============
+
+Development:
+  npm install              # Install all packages & dev deps
+  npm run build            # Build all packages (TypeScript → dist/)
+  npm run test             # Run tests for all packages
+  npm run lint             # Lint all packages
+  npm run format           # Format all packages with Prettier
+  npm run dev              # Watch mode for SDK + LSP Server
+
+Publishing:
+  npm run changeset        # Create changeset entry
+  npm run changeset:status # Check what will be published
+  npm run publish:all      # Publish all packages to npm
+
+CI/CD:
+  .github/workflows/ci.yml        # Runs on every push/PR
+  .github/workflows/publish.yml   # Runs on main branch push
+
+TECHNOLOGY STACK
+================
+
+Core:
+  - Node.js >=18
+  - TypeScript 5.3 (strict mode)
+  - ESM (ECMAScript modules only)
+  - npm workspaces
+
+Validation:
+  - AJV 8.17.1 (JSON Schema 2020-12)
+  - jsonc-parser 3.2.1 (JSONC parsing + position mapping)
+
+LSP:
+  - vscode-languageserver 8.1.0
+  - vscode-languageserver-textdocument 1.3.0
+  - vscode-languageclient 9.0.1
+
+CLI:
+  - cac 6.7.14 (CLI framework)
+
+DevTools:
+  - tsup (bundler)
+  - mocha (test runner)
+  - eslint (linter)
+  - prettier (formatter)
+  - changesets (versioning)
+
+STATUS
+======
+
+Version: 0.1.0-dev
+MVP Status: 🟢 MVP Phase
+Last Updated: October 2025
+License: MIT
+
+For detailed docs, see: README.md
+For technical spec (Russian), see: tz.md

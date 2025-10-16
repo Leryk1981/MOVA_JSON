@@ -1,0 +1,88 @@
+{
+  "name": "@mova/client-vscode",
+  "version": "0.1.0",
+  "description": "MOVA VSCode extension client (thin LSP wrapper)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:mova",
+    "onLanguage:json",
+    "workspaceContains:*.envelope.json"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mova",
+        "aliases": [
+          "MOVA",
+          "mova"
+        ],
+        "extensions": [
+          ".mova",
+          ".envelope.json"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mova",
+        "scopeName": "source.mova",
+        "path": "./syntaxes/mova.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "mova.validate",
+        "title": "MOVA: Validate Current File"
+      },
+      {
+        "command": "mova.runDry",
+        "title": "MOVA: Run Plan (Dry Run)"
+      }
+    ],
+    "configuration": {
+      "title": "MOVA LSP",
+      "properties": {
+        "mova.lsp.executorEndpoint": {
+          "type": "string",
+          "description": "HTTP endpoint for dry-run executor"
+        },
+        "mova.lsp.schemaPath": {
+          "type": "string",
+          "description": "Local path or URL to schemas"
+        }
+      }
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "echo 'VSCode client tests'",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@mova/sdk": "workspace:*",
+    "@mova/server-lsp": "workspace:*",
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/vscode": "^1.84.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}

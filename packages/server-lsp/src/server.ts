@@ -1,0 +1,277 @@
+#!/usr/bin/env node
+
+import {
+  createConnection,
+  ProposedFeatures,
+  TextDocuments,
+  Diagnostic,
+  DiagnosticSeverity,
+  CompletionItem,
+  CompletionItemKind,
+  Hover,
+  InitializeParams,
+  InitializeResult,
+  TextDocumentPositionParams,
+  Range,
+  Position,
+  DidChangeConfigurationNotification,
+  TextDocumentSyncKind,
+  ExecuteCommandParams,
+} from 'vscode-languageserver/node';
+
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { parseTree, findNodeAtLocation, type Node as JsonNode } from 'jsonc-parser';
+
+// Import SDK
+import * as movaSdk from '@mova/sdk';
+
+// Create connection and documents manager
+const connection = createConnection(ProposedFeatures.all);
+const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+
+// Settings cache
+interface ServerSettings {
+  executorEndpoint?: string;
+  schemaPath?: string;
+  maxDiagnostics?: number;
+}
+
+let globalSettings: ServerSettings = {
+  maxDiagnostics: 200,
+};
+
+const documentSettings = new Map<string, Promise<ServerSettings>>();
+
+// Initialize
+connection.onInitialize((params: InitializeParams): InitializeResult => {
+  connection.console.log('MOVA LSP: initializing');
+
+  // Load schemas
+  try {
+    if (typeof movaSdk.initializeValidator === 'function') {
+      void movaSdk.initializeValidator().catch((e: any) =>
+        connection.console.warn('movaSdk.initializeValidator() warning:', String(e))
+      );
+    }
+  } catch (e) {
+    connection.console.warn('Error calling movaSdk.initializeValidator', String(e));
+  }
+
+  const result: InitializeResult = {
+    capabilities: {
+      textDocumentSync: TextDocumentSyncKind.Incremental,
+      completionProvider: {
+        resolveProvider: false,
+        triggerCharacters: ['"', "'", '/', '.', ':'],
+      },
+      hoverProvider: true,
+      executeCommandProvider: {
+        commands: ['mova.runPlanDry'],
+      },
+    },
+  };
+
+  return result;
+});
+
+connection.onInitialized(() => {
+  connection.console.log('MOVA LSP: initialized');
+  connection.client.register(DidChangeConfigurationNotification.type, undefined);
+});
+
+// Helper functions
+function offsetToPosition(text: string, offset: number): Position {
+  const lines = text.slice(0, Math.max(0, offset)).split(/\r\n|\n/);
+  const line = Math.max(0, lines.length - 1);
+  const character = lines[lines.length - 1]?.length ?? 0;
+  return Position.create(line, character);
+}
+
+function nodeToRange(node: JsonNode, text: string): Range {
+  const start = offsetToPosition(text, node.offset);
+  const end = offsetToPosition(text, node.offset + node.length);
+  return Range.create(start, end);
+}
+
+function instancePathToPathArray(instancePath: string): Array<string | number> {
+  if (!instancePath) return [];
+  const parts = instancePath.replace(/^\//, '').split('/');
+  return parts.map((p) => {
+    if (/^\d+$/.test(p)) return Number(p);
+    return p.replace(/~1/g, '/').replace(/~0/g, '~');
+  });
+}
+
+// Diagnostics pipeline
+async function validateAndSendDiagnostics(text: string, uri: string): Promise<void> {
+  try {
+    const res = await movaSdk.validateDocument(text, uri);
+    const diagnostics: Diagnostic[] = [];
+
+    if (res && Array.isArray(res.diagnostics) && res.diagnostics.length > 0) {
+      for (const d of res.diagnostics) {
+        if (d.range) {
+          diagnostics.push({
+            message: d.message ?? 'validation error',
+            severity: d.severity === 'warning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+            range: d.range as Range,
+            source: 'mova-ajv',
+          });
+        } else if (d.instancePath) {
+          const docParse = parseTree(text, undefined, { allowTrailingComma: true });
+          const path = instancePathToPathArray(d.instancePath);
+          const node = docParse ? findNodeAtLocation(docParse, path) : undefined;
+          const range = node
+            ? nodeToRange(node, text)
+            : Range.create(Position.create(0, 0), Position.create(0, 1));
+          diagnostics.push({
+            message: (d.message ?? `${d.instancePath} ${d.keyword ?? ''}`).trim(),
+            severity: d.severity === 'warning' ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+            range,
+            source: 'mova-ajv',
+          });
+        }
+      }
+    }
+
+    const maxD = globalSettings.maxDiagnostics ?? 200;
+    connection.sendDiagnostics({ uri, diagnostics: diagnostics.slice(0, maxD) });
+  } catch (err: any) {
+    connection.window.showErrorMessage(`MOVA LSP validate error: ${String(err)}`);
+    connection.console.error('validateAndSendDiagnostics error', String(err));
+  }
+}
+
+// Document change handlers
+documents.onDidChangeContent((change) => {
+  const text = change.document.getText();
+  validateAndSendDiagnostics(text, change.document.uri);
+});
+
+documents.onDidClose((e) => {
+  connection.sendDiagnostics({ uri: e.document.uri, diagnostics: [] });
+});
+
+// Completion handler
+connection.onCompletion(async (params: TextDocumentPositionParams): Promise<CompletionItem[]> => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    const text = doc?.getText() ?? '';
+
+    if (typeof movaSdk.suggestCompletions === 'function') {
+      try {
+        const ctx = {
+          text,
+          uri: params.textDocument.uri,
+          position: params.position,
+        };
+        const items = await movaSdk.suggestCompletions(ctx);
+        if (Array.isArray(items)) return items;
+      } catch (e) {
+        connection.console.warn('movaSdk.suggestCompletions failed:', String(e));
+      }
+    }
+
+    // Fallback
+    const fallback: CompletionItem[] = [
+      { label: 'http_fetch', kind: CompletionItemKind.Function, detail: 'action: http_fetch' },
+      { label: 'set', kind: CompletionItemKind.Function, detail: 'action: set variable' },
+      { label: 'assert', kind: CompletionItemKind.Function, detail: 'action: assert condition' },
+      { label: 'emit_event', kind: CompletionItemKind.Function, detail: 'action: emit event' },
+    ];
+    return fallback;
+  } catch (err) {
+    connection.console.error('onCompletion error', String(err));
+    return [];
+  }
+});
+
+// Hover handler
+connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | null> => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return null;
+
+    const text = doc.getText();
+    const offset = positionToOffset(text, params.position);
+    const tree = parseTree(text, undefined, { allowTrailingComma: true });
+    if (!tree) return null;
+
+    const node = findNodeCoveringOffset(tree, offset);
+    if (!node) return null;
+
+    return { contents: { kind: 'markdown', value: `**Field**: \`${node.type}\`` } };
+  } catch (e) {
+    connection.console.error('onHover error', String(e));
+    return null;
+  }
+});
+
+// Helper functions for hover
+function positionToOffset(text: string, pos: Position): number {
+  const lines = text.split(/\r\n|\n/);
+  let offset = 0;
+  for (let i = 0; i < pos.line; i++) {
+    offset += (lines[i]?.length ?? 0) + 1;
+  }
+  offset += pos.character;
+  return offset;
+}
+
+function findNodeCoveringOffset(root: JsonNode | undefined, offset: number): JsonNode | undefined {
+  if (!root) return undefined;
+  let result: JsonNode | undefined = undefined;
+  const stack: JsonNode[] = [root];
+  while (stack.length) {
+    const n = stack.pop()!;
+    if (n.offset <= offset && offset <= n.offset + n.length) {
+      result = n;
+      if (n.children && n.children.length) {
+        for (const c of n.children) stack.push(c);
+      }
+    }
+  }
+  return result;
+}
+
+// Commands
+connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
+  if (params.command === 'mova.runPlanDry') {
+    const args = params.arguments ?? [];
+    let text: string | undefined;
+    if (args.length > 0 && typeof args[0] === 'string') {
+      const first = args[0] as string;
+      if (first.startsWith('file://') || first.startsWith('untitled:')) {
+        const doc = documents.get(first);
+        text = doc?.getText();
+      } else {
+        text = first;
+      }
+    }
+    if (!text) {
+      connection.window.showErrorMessage('mova.runPlanDry: no document provided');
+      return;
+    }
+
+    try {
+      connection.window.showInformationMessage('Dry-run not yet implemented');
+    } catch (e: any) {
+      connection.window.showErrorMessage('mova.runPlanDry failed: ' + String(e));
+    }
+  }
+});
+
+// Settings
+connection.onDidChangeConfiguration((change) => {
+  const settings = change.settings?.mova ?? {};
+  globalSettings.executorEndpoint = settings.executorEndpoint ?? globalSettings.executorEndpoint;
+  globalSettings.schemaPath = settings.schemaPath ?? globalSettings.schemaPath;
+  globalSettings.maxDiagnostics = settings.maxDiagnostics ?? globalSettings.maxDiagnostics;
+  documents.all().forEach((doc) => {
+    validateAndSendDiagnostics(doc.getText(), doc.uri);
+  });
+});
+
+// Listen
+documents.listen(connection);
+connection.listen();
