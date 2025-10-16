@@ -1,0 +1,7 @@
+{
+  "name": "@changesets/changelog-github",
+  "version": "0.5.0",
+  "description": "Local fallback implementation of Changesets GitHub changelog plugin.",
+  "main": "index.cjs",
+  "license": "MIT"
+}
