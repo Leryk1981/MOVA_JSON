@@ -16,6 +16,7 @@ import {
   DidChangeConfigurationNotification,
   TextDocumentSyncKind,
   ExecuteCommandParams,
+  SymbolKind,
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -62,6 +63,14 @@ connection.onInitialize((): InitializeResult => {
         triggerCharacters: ['"', "'", '/', '.', ':'],
       },
       hoverProvider: true,
+      renameProvider: {
+        prepareProvider: true,
+      },
+      referencesProvider: true,
+      documentSymbolProvider: true,
+      workspaceSymbolProvider: true,
+      documentFormattingProvider: true,
+      documentRangeFormattingProvider: true,
       executeCommandProvider: {
         commands: ['mova.runPlanDry'],
       },
@@ -269,6 +278,160 @@ connection.onExecuteCommand(async (params: ExecuteCommandParams) => {
     } catch (e: unknown) {
       connection.window.showErrorMessage('mova.runPlanDry failed: ' + String(e));
     }
+  }
+});
+
+// Track all open documents for workspace symbols
+const allDocuments = new Map<string, string>();
+
+documents.onDidOpen((event) => {
+  allDocuments.set(event.document.uri, event.document.getText());
+});
+
+documents.onDidChangeContent((event) => {
+  allDocuments.set(event.document.uri, event.document.getText());
+});
+
+documents.onDidClose((event) => {
+  allDocuments.delete(event.document.uri);
+});
+
+// Rename handler
+connection.onPrepareRename((params) => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return null;
+
+    const range = movaSdk.prepareRename(doc.getText(), params.position);
+    return range;
+  } catch (e: unknown) {
+    connection.console.error(`onPrepareRename error: ${String(e)}`);
+    return null;
+  }
+});
+
+connection.onRenameRequest((params) => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return null;
+
+    const edit = movaSdk.rename(doc.getText(), params.position, params.newName);
+    return edit;
+  } catch (e: unknown) {
+    connection.console.error(`onRenameRequest error: ${String(e)}`);
+    return null;
+  }
+});
+
+// References handler
+connection.onReferences((params) => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return [];
+
+    return movaSdk.findReferences(doc.getText(), params.position);
+  } catch (e: unknown) {
+    connection.console.error(`onReferences error: ${String(e)}`);
+    return [];
+  }
+});
+
+// Document Symbols handler
+connection.onDocumentSymbol((params) => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return [];
+
+    const symbols = movaSdk.getDocumentSymbols(doc.getText());
+    return symbols.map(sym => ({
+      name: sym.name,
+      kind: sym.kind as SymbolKind,
+      range: sym.range,
+      selectionRange: sym.selectionRange,
+      children: sym.children?.map(child => ({
+        name: child.name,
+        kind: child.kind as SymbolKind,
+        range: child.range,
+        selectionRange: child.selectionRange,
+        children: child.children?.map(grandchild => ({
+          name: grandchild.name,
+          kind: grandchild.kind as SymbolKind,
+          range: grandchild.range,
+          selectionRange: grandchild.selectionRange,
+        })),
+      })),
+    }));
+  } catch (e: unknown) {
+    connection.console.error(`onDocumentSymbol error: ${String(e)}`);
+    return [];
+  }
+});
+
+// Workspace Symbols handler
+connection.onWorkspaceSymbol((params) => {
+  try {
+    const symbols = movaSdk.getWorkspaceSymbols(params.query, allDocuments);
+    return symbols.map(sym => ({
+      name: sym.name,
+      kind: sym.kind as SymbolKind,
+      location: {
+        uri: sym.location.uri,
+        range: sym.location.range,
+      },
+    }));
+  } catch (e: unknown) {
+    connection.console.error(`onWorkspaceSymbol error: ${String(e)}`);
+    return [];
+  }
+});
+
+// Document Formatting handler
+connection.onDocumentFormatting((params) => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return [];
+
+    const formatted = movaSdk.formatDocument(doc.getText(), {
+      tabSize: params.options.tabSize,
+      insertSpaces: params.options.insertSpaces,
+    });
+
+    const lines = doc.getText().split('\n');
+    return [
+      {
+        range: Range.create(
+          Position.create(0, 0),
+          Position.create(lines.length, 0)
+        ),
+        newText: formatted,
+      },
+    ];
+  } catch (e: unknown) {
+    connection.console.error(`onDocumentFormatting error: ${String(e)}`);
+    return [];
+  }
+});
+
+// Document Range Formatting handler
+connection.onDocumentRangeFormatting((params) => {
+  try {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return [];
+
+    const formatted = movaSdk.formatRange(doc.getText(), params.range, {
+      tabSize: params.options.tabSize,
+      insertSpaces: params.options.insertSpaces,
+    });
+
+    return [
+      {
+        range: params.range,
+        newText: formatted,
+      },
+    ];
+  } catch (e: unknown) {
+    connection.console.error(`onDocumentRangeFormatting error: ${String(e)}`);
+    return [];
   }
 });
 

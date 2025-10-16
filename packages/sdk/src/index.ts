@@ -33,6 +33,22 @@ export {
   isValidIdempotencyKey,
 } from './idempotency.js';
 
+// Advanced LSP Features
+export { prepareRename, rename } from './rename.js';
+export type { WorkspaceEdit } from './rename.js';
+
+export { findReferences } from './references.js';
+export type { ReferenceLocation } from './references.js';
+
+export { getDocumentSymbols } from './document-symbols.js';
+export type { DocumentSymbol } from './document-symbols.js';
+
+export { getWorkspaceSymbols } from './workspace-symbols.js';
+export type { WorkspaceSymbol } from './workspace-symbols.js';
+
+export { formatDocument, formatRange } from './formatting.js';
+export type { FormattingOptions } from './formatting.js';
+
 // Default export for convenience
 import { validateDocument } from './document-validator.js';
 
